@@ -1,26 +1,73 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Booking, BookingDocument } from './schemas/booking.schema';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class BookingsService {
-  create(createBookingDto: CreateBookingDto) {
-    return 'This action adds a new booking';
+  constructor(
+    @InjectModel(Booking.name) private readonly bookingModel: Model<Booking>,
+  ) {}
+
+  async create(createBookingDto: CreateBookingDto): Promise<BookingDocument> {
+    try {
+      return await this.bookingModel.create(createBookingDto);
+    } catch(err: any) {
+      if (err?.code !== 11000) throw err;
+
+      const existing = await this.bookingModel
+        .findOne({ idempotencyKey: createBookingDto.idempotencyKey })
+        .exec();
+
+      if (!existing) throw err;
+
+      const samePayload =
+        existing.customerName === createBookingDto.customerName.trim() &&
+        existing.destination === createBookingDto.destination &&
+        existing.travelDate.getTime() === new Date(createBookingDto.travelDate).getTime() &&
+        existing.amount === createBookingDto.amount;
+
+      if (samePayload) return existing;
+
+      throw new ConflictException('Idempotency key already used with a different payload')
+    }
   }
 
-  findAll() {
-    return `This action returns all bookings`;
+  async findAll(): Promise<BookingDocument[]> {
+    return this.bookingModel.find().sort({ createdAt: -1 }).exec();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} booking`;
+  async findOne(id: string): Promise<BookingDocument> {
+    const booking = await this.bookingModel.findById(id).exec();
+
+    if (!booking) {
+      throw new NotFoundException(`Booking ${id} not found`);
+    }
+
+    return booking;
   }
 
-  update(id: number, updateBookingDto: UpdateBookingDto) {
-    return `This action updates a #${id} booking`;
+  async update(id: string, updateBookingDto: UpdateBookingDto): Promise<BookingDocument> {
+    const booking = await this.bookingModel
+      .findByIdAndUpdate(id, updateBookingDto, { new: true, runValidators: true })
+      .exec();
+    
+    if (!booking) {
+      throw new NotFoundException(`Booking ${id} not found`);
+    }
+
+    return booking;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} booking`;
+  async remove(id: string): Promise<BookingDocument> {
+    const booking = await this.bookingModel.findByIdAndDelete(id).exec();
+
+    if (!booking) {
+      throw new NotFoundException(`Booking ${id} not found`);
+    }
+
+    return booking;
   }
 }
