@@ -1,0 +1,20 @@
+<h1>Bookings</h1>
+
+@if (loading()) {
+    <p>Loading...</p>
+} @else if (error()) {
+    <p class="error">{{ error() }}</p>
+} @else {
+    <ul>
+        @for (b of bookings(); track b._id) {
+            <li>
+                <strong>{{ b.customerName }}</strong> -> {{ b.destination }}
+                . {{ b.travelDate | date }}
+                . {{ b.amount | currency: 'PHP' }}
+                . {{ b.status }}
+            </li>
+        } @empty {
+            <li>No bookings yet.</li>
+        }
+    </ul>
+}
