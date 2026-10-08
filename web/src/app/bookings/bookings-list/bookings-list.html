@@ -7,6 +7,10 @@
 } @else if (error()) {
     <p class="error">{{ error() }}</p>
 } @else {
+    @if (actionError()) {
+        <p class="error">{{ actionError() }}</p>
+    }
+
     <ul>
         @for (b of bookings(); track b._id) {
             <li>
@@ -14,6 +18,11 @@
                 . {{ b.travelDate | date }}
                 . {{ b.amount | currency: 'PHP' }}
                 . {{ b.status }}
+                @if (b.status === 'pending') {
+                    <button (click)="setStatus(b, 'confirmed')" [disabled]="busyId() === b._id">Confirm</button>
+                    <button (click)="setStatus(b, 'cancelled')" [disabled]="busyId() === b._id">Cancel</button>
+                }
+                <button (click)="remove(b)" [disabled]="busyId() === b._id">Delete</button>
             </li>
         } @empty {
             <li>No bookings yet.</li>

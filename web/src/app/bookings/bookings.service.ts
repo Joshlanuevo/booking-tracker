@@ -19,4 +19,12 @@ export class BookingsService {
     create(data: CreateBooking): Observable<Booking> {
         return this.http.post<Booking>(this.apiUrl, data);
     }
+
+    updateStatus(id: string, status: Booking['status']): Observable<Booking> {
+        return this.http.patch<Booking>(`${this.apiUrl}/${id}`, { status });
+    }
+
+    remove(id: string): Observable<void> {
+        return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    }
 }
