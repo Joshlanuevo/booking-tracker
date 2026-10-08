@@ -1,0 +1,35 @@
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <h2>New booking</h2>
+
+  <label for="customerName">Customer name</label>
+  <input id="customerName" formControlName="customerName" />
+  @if (form.controls.customerName.invalid && form.controls.customerName.touched) {
+    <small class="error">Customer name is required.</small>
+  }
+
+  <label for="destination">Destination</label>
+  <input id="destination" formControlName="destination" />
+  @if (form.controls.destination.invalid && form.controls.destination.touched) {
+    <small class="error">Destination is required.</small>
+  }
+
+  <label for="travelDate">Travel date</label>
+  <input id="travelDate" type="date" formControlName="travelDate" />
+  @if (form.controls.travelDate.invalid && form.controls.travelDate.touched) {
+    <small class="error">Travel date is required.</small>
+  }
+
+  <label for="amount">Amount (PHP)</label>
+  <input id="amount" type="number" min="0" formControlName="amount" />
+  @if (form.controls.amount.invalid && form.controls.amount.touched) {
+    <small class="error">Amount must be 0 or more.</small>
+  }
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
+  <button type="submit" [disabled]="submitting()">
+    {{ submitting() ? 'Saving...' : 'Add booking' }}
+  </button>
+</form>

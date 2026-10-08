@@ -1,5 +1,7 @@
 <h1>Bookings</h1>
 
+<app-booking-form (created)="onCreated($event)" />
+
 @if (loading()) {
     <p>Loading...</p>
 } @else if (error()) {

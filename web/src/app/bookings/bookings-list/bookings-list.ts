@@ -2,9 +2,10 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { BookingsService } from '../bookings.service';
 import { Booking } from '../booking.model';
+import { BookingForm } from '../booking-form/booking-form';
 
 @Component({
-  imports: [CurrencyPipe, DatePipe],
+  imports: [CurrencyPipe, DatePipe, BookingForm],
   selector: 'app-bookings-list',
   styleUrl: './bookings-list.css',
   templateUrl: './bookings-list.html',
@@ -27,5 +28,9 @@ export class BookingsList implements OnInit {
         this.loading.set(false);
       }
     })
+  }
+
+  onCrate(booking: Booking) {
+    this.bookings.update(list => [booking, ...list])
   }
 }

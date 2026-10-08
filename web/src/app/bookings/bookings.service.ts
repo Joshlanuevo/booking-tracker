@@ -3,6 +3,9 @@ import { HttpClient } from "@angular/common/http";
 import { Observable } from "rxjs";
 import { Booking } from "./booking.model";
 
+export type CreateBooking = Pick<Booking, 'customerName' | 'destination' | 'travelDate' | 'amount'> & {
+    idempotencyKey: string;
+};
 
 @Injectable({ providedIn: 'root' })
 export class BookingsService {
@@ -11,5 +14,9 @@ export class BookingsService {
 
     getAll(): Observable<Booking[]> {
         return this.http.get<Booking[]>(this.apiUrl);
+    }
+
+    create(data: CreateBooking): Observable<Booking> {
+        return this.http.post<Booking>(this.apiUrl, data);
     }
 }
