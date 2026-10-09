@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, Query } from '@nestjs/common';
 import { ParseObjectIdPipe } from '@nestjs/mongoose';
 import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
@@ -14,8 +14,8 @@ export class BookingsController {
   }
 
   @Get()
-  findAll() {
-    return this.bookingsService.findAll();
+  findAll(@Query('search') search?: string) {
+    return this.bookingsService.findAll(search);
   }
 
   @Get(':id')

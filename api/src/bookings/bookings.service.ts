@@ -5,6 +5,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Booking, BookingDocument } from './schemas/booking.schema';
 import { Model } from 'mongoose';
 
+// treat the user's text as plain text, not regex syntax
+const escapeRegex = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 @Injectable()
 export class BookingsService {
   constructor(
@@ -35,8 +38,18 @@ export class BookingsService {
     }
   }
 
-  async findAll(): Promise<BookingDocument[]> {
-    return this.bookingModel.find().sort({ createdAt: -1 }).exec();
+  async findAll(search?: string): Promise<BookingDocument[]> {
+    const term = search?.trim();
+    const filter = term 
+      ? {
+          $or: [
+            { customerName: new RegExp(escapeRegex(term), 'i') },
+            { destination: new RegExp(escapeRegex(term), 'i') },
+          ],
+        }
+      : {};
+    
+    return this.bookingModel.find(filter).sort({ createdAt: -1 }).exec();
   }
 
   async findOne(id: string): Promise<BookingDocument> {
