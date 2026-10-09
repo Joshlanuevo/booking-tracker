@@ -1,17 +1,22 @@
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { catchError, debounceTime, distinctUntilChanged, map, of, startWith, switchMap, tap } from 'rxjs';
 import { BookingsService } from '../bookings.service';
 import { Booking } from '../booking.model';
 import { BookingForm } from '../booking-form/booking-form';
 
 @Component({
-  imports: [CurrencyPipe, DatePipe, BookingForm],
+  imports: [CurrencyPipe, DatePipe, BookingForm, ReactiveFormsModule],
   selector: 'app-bookings-list',
   styleUrl: './bookings-list.css',
   templateUrl: './bookings-list.html',
 })
 export class BookingsList implements OnInit {
   private bookingsService = inject(BookingsService);
+  private destroyRef = inject(DestroyRef);
+  search = new FormControl('', { nonNullable: true });
 
   bookings = signal<Booking[]>([]);
   loading = signal(true);
@@ -20,16 +25,28 @@ export class BookingsList implements OnInit {
   actionError = signal<string | null>(null);
 
   ngOnInit(): void {
-    this.bookingsService.getAll().subscribe({
-      next: (data) => {
-        this.bookings.set(data);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('Could not load bookings. Is the API running?');
-        this.loading.set(false);
-      }
-    })
+    this.search.valueChanges.pipe(
+      debounceTime(300),                 // wait until typing pauses
+      map(term => term.trim()),
+      startWith(''),                     // load everything on first open
+      distinctUntilChanged(),            // skip if the term didn't change
+      tap(() => {
+        this.loading.set(true);
+        this.error.set(null);
+      }),
+      switchMap(term =>                  // cancel the old request, start a new one
+        this.bookingsService.getAll(term).pipe(
+          catchError(() => {
+            this.error.set('Could not load bookings. Is the API running?');
+            return of([]);
+          }),
+        ),
+      ),
+      takeUntilDestroyed(this.destroyRef), // unsubscribe when the page closes
+    ).subscribe(data => {
+      this.bookings.set(data);
+      this.loading.set(false);
+    });
   }
 
   onCreated(booking: Booking) {

@@ -2,6 +2,13 @@
 
 <app-booking-form (created)="onCreated($event)" />
 
+<input
+  type="search"
+  placeholder="Search by customer or destination"
+  aria-label="Search bookings"
+  [formControl]="search"
+/>
+
 @if (loading()) {
     <p>Loading...</p>
 } @else if (error()) {

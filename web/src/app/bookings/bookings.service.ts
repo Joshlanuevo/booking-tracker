@@ -12,8 +12,9 @@ export class BookingsService {
     private http = inject(HttpClient);
     private apiUrl = 'http://localhost:3000/bookings';
 
-    getAll(): Observable<Booking[]> {
-        return this.http.get<Booking[]>(this.apiUrl);
+    getAll(search = ''): Observable<Booking[]> {
+        const params: Record<string, string> = search ? { search } : {};
+        return this.http.get<Booking[]>(this.apiUrl, { params });
     }
 
     create(data: CreateBooking): Observable<Booking> {
